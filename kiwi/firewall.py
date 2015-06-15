@@ -62,7 +62,7 @@ class Firewall (object):
             '-p', service['protocol'].lower(),
             '--dport', service['port'],
             '-m', 'comment',
-            '--comment', service['id'],
+            '--comment', service['uid'],
             '-j', 'MARK', '--set-mark', self.fwmark
         ])
 
@@ -73,12 +73,12 @@ class Firewall (object):
         if rule in self.rules:
             LOG.info('not adding rule for service %s '
                      'on %s port %d (already exists)',
-                     service['id'], address, service['port'])
+                     service['uid'], address, service['port'])
             return
 
         LOG.info('adding firewall rules for service %s '
                  'on %s port %d',
-                 service['id'], address, service['port'])
+                 service['uid'], address, service['port'])
 
         try:
             iptables.mangle.chains[self.fwchain].append(rule)
@@ -94,7 +94,7 @@ class Firewall (object):
 
         LOG.info('removing firewall rules for service %s '
                  'on %s port %d',
-                 service['id'], address, service['port'])
+                 service['uid'], address, service['port'])
         self.rules.remove(rule)
         try:
             iptables.mangle.chains[self.fwchain].remove(rule=rule)
