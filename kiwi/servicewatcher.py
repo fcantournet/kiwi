@@ -49,7 +49,7 @@ class ServiceWatcher (object):
                  kube_endpoint=defaults.kube_endpoint):
         super(ServiceWatcher, self).__init__()
 
-        self.kube_api = '%s/api/v1beta1' % kube_endpoint
+        self.kube_api = '%s/api/v1' % kube_endpoint
         self.reconnect_interval = reconnect_interval
 
     def __iter__(self):

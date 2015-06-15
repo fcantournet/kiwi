@@ -228,58 +228,59 @@ class Manager (object):
     def handle_add_service(self, msg):
         service = msg['service']
 
-        for address in service.get('publicIPs', []):
-            if not self.address_is_valid(address):
-                LOG.warn('ignoring invalid address %s',
-                         address)
-                continue
-
-            LOG.info('adding service %s on %s',
-                     service['id'],
+        ## Address is now a single address following the Kubernetes v1 API
+        address = service.get('clusterIP', "")
+        if not self.address_is_valid(address):
+            LOG.warn('ignoring invalid address %s',
                      address)
+            return
 
-            if self.fw_driver:
-                try:
-                    self.fw_driver.add_service(address, service)
-                except FirewallDriverError as exc:
-                    LOG.error('failed to configure host firewall: %d',
-                              exc.returncode)
+        LOG.info('adding service %s on %s',
+                 service['id'],
+                 address)
 
+        if self.fw_driver:
             try:
-                self.addresses[address]['count'] += 1
-            except KeyError:
-                self.addresses[address] = {
-                    'count': 1,
-                    'claimed': False
-                }
+                self.fw_driver.add_service(address, service)
+            except FirewallDriverError as exc:
+                LOG.error('failed to configure host firewall: %d',
+                          exc.returncode)
 
-            if not self.address_is_claimed(address):
-                self.claim_address(address)
+        try:
+            self.addresses[address]['count'] += 1
+        except KeyError:
+            self.addresses[address] = {
+                'count': 1,
+                'claimed': False
+            }
+
+        if not self.address_is_claimed(address):
+            self.claim_address(address)
 
     def handle_delete_service(self, msg):
         service = msg['service']
 
-        for address in service.get('publicIPs', []):
-            if not self.address_is_valid(address):
-                LOG.warn('ignoring invalid address %s',
-                         address)
-                continue
-
-            LOG.info('removing service %s on %s',
-                     service['id'],
+        address = service.get('clusterIP', "")
+        if not self.address_is_valid(address):
+            LOG.warn('ignoring invalid address %s',
                      address)
+            return
 
-            if self.fw_driver:
-                try:
-                    self.fw_driver.remove_service(address, service)
-                except FirewallDriverError as exc:
-                    LOG.error('failed to configure host firewall: %d',
-                              exc.returncode)
+        LOG.info('removing service %s on %s',
+                 service['id'],
+                 address)
 
-            if address in self.addresses:
-                self.addresses[address]['count'] -= 1
-                if not self.address_is_active(address):
-                    self.remove_address(address)
+        if self.fw_driver:
+            try:
+                self.fw_driver.remove_service(address, service)
+            except FirewallDriverError as exc:
+                LOG.error('failed to configure host firewall: %d',
+                          exc.returncode)
+
+        if address in self.addresses:
+            self.addresses[address]['count'] -= 1
+            if not self.address_is_active(address):
+                self.remove_address(address)
 
     def handle_delete_address(self, msg):
         address = msg['address']
