@@ -1,4 +1,4 @@
-etcd_endpoint = 'http://localhost:4001'
+etcd_endpoint = 'http://localhost:2379'
 kube_endpoint = 'http://localhost:8080'
 interface = 'eth0'
 fwchain = 'KUBE-PUBLIC'
