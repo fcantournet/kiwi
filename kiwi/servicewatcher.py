@@ -59,7 +59,7 @@ class ServiceWatcher (object):
             service = event['object']
             LOG.debug('received %s for %s',
                       event['type'],
-                      service['uid'])
+                      service['metadata']['name'])
 
             handler = getattr(self,
                               'handle_%s' % event['type'].lower())
@@ -74,17 +74,17 @@ class ServiceWatcher (object):
 
     def handle_added(self, service):
         return({'message': 'add-service',
-                'target': service['uid'],
+                'target': service['metadata']['name'],
                 'service': service})
 
     def handle_deleted(self, service):
         return({'message': 'delete-service',
-                'target': service['uid'],
+                'target': service['metadata']['name'],
                 'service': service})
 
     def handle_modified(self, service):
         return({'message': 'update-service',
-                'target': service['uid'],
+                'target': service['metadata']['name'],
                 'service': service})
 
 if __name__ == '__main__':

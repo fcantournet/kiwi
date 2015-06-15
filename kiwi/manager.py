@@ -236,7 +236,7 @@ class Manager (object):
             return
 
         LOG.info('adding service %s on %s',
-                 service['uid'],
+                 service['metadata']['name'],
                  address)
 
         if self.fw_driver:
@@ -267,7 +267,7 @@ class Manager (object):
             return
 
         LOG.info('removing service %s on %s',
-                 service['uid'],
+                 service['metadata']['name'],
                  address)
 
         if self.fw_driver:
