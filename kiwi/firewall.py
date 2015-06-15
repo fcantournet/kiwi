@@ -59,8 +59,8 @@ class Firewall (object):
 
         return iptables.Rule(str(arg) for arg in [
             '-d', address,
-            '-p', service['protocol'].lower(),
-            '--dport', service['port'],
+            '-p', service['spec']['ports'][0]['protocol'].lower(),
+            '--dport', service['spec']['ports'][0],
             '-m', 'comment',
             '--comment', service['metadata']['name'],
             '-j', 'MARK', '--set-mark', self.fwmark
