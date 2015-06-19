@@ -53,14 +53,13 @@ class Firewall (object):
         except iptables.CommandError as exc:
             raise FirewallDriverError(reason=exc)
 
-    def rule_for(self, address, service):
+    def rule_for(self, address, service, port):
         '''Generate an iptables rule (returned as a tuple) for the given
         address and service.'''
-
         return iptables.Rule(str(arg) for arg in [
             '-d', address,
-            '-p', service['spec']['ports'][0]['protocol'].lower(),
-            '--dport', service['spec']['ports'][0],
+            '-p', port['protocol'].lower(),
+            '--dport', port['port'],
             '-m', 'comment',
             '--comment', service['metadata']['name'],
             '-j', 'MARK', '--set-mark', self.fwmark
@@ -69,34 +68,36 @@ class Firewall (object):
     def add_service(self, address, service):
         '''Add a new service to the firewall.'''
 
-        rule = self.rule_for(address, service)
-        if rule in self.rules:
-            LOG.info('not adding rule for service %s '
-                     'on %s port %d (already exists)',
-                     service['metadata']['name'], address, service['port'])
-            return
+        for port in service['spec']['ports']:
+            rule = self.rule_for(address, service, port)
+            if rule in self.rules:
+                LOG.info('not adding rule for service %s '
+                         'on %s port %d (already exists)',
+                         service['metadata']['name'], address, port['port'])
+                continue
 
-        LOG.info('adding firewall rules for service %s '
-                 'on %s port %d',
-                 service['metadata']['name'], address, service['port'])
+            LOG.info('adding firewall rules for service %s '
+                     'on %s port %d',
+                     service['metadata']['name'], address, port['port'])
 
-        try:
-            iptables.mangle.chains[self.fwchain].append(rule)
-        except iptables.CommandError as exc:
-            raise FirewallDriverError(reason=exc)
-        else:
-            self.rules.add(rule)
+            try:
+                iptables.mangle.chains[self.fwchain].append(rule)
+            except iptables.CommandError as exc:
+                raise FirewallDriverError(reason=exc)
+            else:
+                self.rules.add(rule)
 
     def remove_service(self, address, service):
         '''Remove a service from the firewall.'''
 
-        rule = self.rule_for(address, service)
+        for port in service['spec']['ports']:
+            rule = self.rule_for(address, service, port)
 
-        LOG.info('removing firewall rules for service %s '
-                 'on %s port %d',
-                 service['metadata']['name'], address, service['port'])
-        self.rules.remove(rule)
-        try:
-            iptables.mangle.chains[self.fwchain].remove(rule=rule)
-        except iptables.CommandError as exc:
-            raise FirewallDriverError(reason=exc)
+            LOG.info('removing firewall rules for service %s '
+                     'on %s port %d',
+                     service['metadata']['name'], address, port['port'])
+            self.rules.remove(rule)
+            try:
+                iptables.mangle.chains[self.fwchain].remove(rule=rule)
+            except iptables.CommandError as exc:
+                raise FirewallDriverError(reason=exc)
