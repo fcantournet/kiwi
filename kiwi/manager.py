@@ -229,7 +229,7 @@ class Manager (object):
         service = msg['service']
 
         ## Address is now a single address following the Kubernetes v1 API
-        address = service.get('clusterIP', "")
+        address = service['spec'].get('clusterIP', "")
         if not self.address_is_valid(address):
             LOG.warn('ignoring invalid address %s',
                      address)
@@ -260,7 +260,7 @@ class Manager (object):
     def handle_delete_service(self, msg):
         service = msg['service']
 
-        address = service.get('clusterIP', "")
+        address = service['spec'].get('clusterIP', "")
         if not self.address_is_valid(address):
             LOG.warn('ignoring invalid address %s',
                      address)
